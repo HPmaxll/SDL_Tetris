@@ -5,6 +5,7 @@
 #define MENU_COUNT 3
 #include <SDL.h>
 #include <SDL_ttf.h>
+#include "constants.h"
 
 extern SDL_Color menuFg;
 extern SDL_Color menuBg;
@@ -19,5 +20,7 @@ extern char* menuSelect[MENU_COUNT];
 
 SDL_Texture* getFontTexture(SDL_Renderer*, TTF_Font*, SDL_Color, const char*);
 SDL_Texture* getCharTexture(SDL_Renderer*, TTF_Font*, SDL_Color, Uint16);
-
+int initScore(char*);
+int convertScore(char*, int);
+int renderScore(SDL_Renderer*, char*, SDL_Texture**, int x, int y);
 #endif

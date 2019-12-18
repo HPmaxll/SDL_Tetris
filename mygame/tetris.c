@@ -147,11 +147,13 @@ int setAxis(vector* point, MINOS* minos, int(*pos)[14]) {
 }
 
 int unsetAxis(int(*pos)[14]) {
+    int count = 0;
     for (int i = 4; i < 24; i++) {
         for (int j = 2; j < 12; j++) {
             if (pos[i][j] == 0)
                 break;
             if (j == 11) {
+                count += 1;
                 for (int m = i; m >= 4; m--) {
                     for (int n = 2; n < 12; n++) {
                         if (m == 0)
@@ -163,7 +165,7 @@ int unsetAxis(int(*pos)[14]) {
             }
         }
     }
-    return 0;
+    return count;
 }
 
 bool checkGameOver(int(*pos)[14]) {

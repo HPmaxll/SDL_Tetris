@@ -35,6 +35,7 @@ extern const int tetrisWin_x, tetrisWin_y, blockSpace;
 extern const MINOS minos[7][4];
 extern const int refaxis[26][14];
 
+
 int randint();
 int drawMinos(SDL_Renderer*, vector*, MINOS*);
 int drawBlock(SDL_Renderer*, int, int);

@@ -14,15 +14,17 @@ int main(int argc, char* argv[]) {
     SDL_Texture* digitTexture[10];
     TTF_Font* TitleFont, *MainOptionFont;
 
-    Uint32 timeStart, timeCur, prevTime;
+    Uint32 timeStart, timeEnd, curTime, prevTime;
     int frameTime = 1000 / FPS;
     int fallingTime = 500;
-    int minosType, minosAngle, nextType, nextAngle;
+    int minosType, minosAngle, nextType, nextAngle, removeCount;
     int refpos[26][14];
     MINOS curMinos, nextMinos;
     vector tetrisCord, tmpCord, displayCord;
     SDL_Rect popupBack = { 0, (WIN_HEIGHT - 80) / 2, WIN_WIDTH, 70 };
     int menuFocus = 0;
+    char scoreString[SCORE_LENGTH] = "0000000000\0";
+    int score = 0;
     
     SDL_Init(SDL_INIT_EVERYTHING);
     TTF_Init();
@@ -44,7 +46,7 @@ int main(int argc, char* argv[]) {
         -1,
         SDL_RENDERER_ACCELERATED
     );
-    tetris.state = IN_TEST;
+    tetris.state = IN_MENU;
     TitleFont = TTF_OpenFont("assets/fonts/BasculaCollege.ttf", 128);
     MainOptionFont = TTF_OpenFont("assets/fonts/NotoSansMonoCJKsc-Regular.otf", 128);
 
@@ -166,6 +168,7 @@ int main(int argc, char* argv[]) {
                             tetrisCord.y = tmpCord.y;
                             prevTime = SDL_GetTicks();
                         }
+                        
                         break;
 
                     case SDL_SCANCODE_A:
@@ -194,15 +197,19 @@ int main(int argc, char* argv[]) {
             }
 
             /* Game Logic */
-            if (timeStart - prevTime >= fallingTime) {
+            curTime = SDL_GetTicks();
+            if (curTime - prevTime >= fallingTime) {
                 tetrisCord.y += 1;
-                prevTime = timeStart;
+                prevTime = curTime;
             }
             if (minosCollide(&tetrisCord, refpos, &curMinos)) {
                 tetrisCord.y -= 1;
                 setAxis(&tetrisCord, &curMinos, refpos);
-                unsetAxis(refpos);
-               
+                removeCount = unsetAxis(refpos);
+
+                score += removeCount * removeCount * 100;
+                convertScore(scoreString, score);
+
                 minosType = nextType;
                 minosAngle = nextAngle;
                 curMinos = minos[minosType][minosAngle];
@@ -214,12 +221,15 @@ int main(int argc, char* argv[]) {
                 nextMinos = minos[nextType][nextAngle];
                 displayCord.x = 8 + getMinosX(&nextMinos);
                 displayCord.y = 6 + getMinosY(&nextMinos);
+
+                
             }
             if (checkGameOver(refpos))
                 tetris.state = GAME_OVER;
 
             SDL_SetRenderDrawColor(tetris.renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
             SDL_RenderClear(tetris.renderer);
+            renderScore(tetris.renderer, scoreString, digitTexture, tetrisWin_x, 10);
             drawGrid(tetris.renderer);
             drawRecord(tetris.renderer, refpos);
             drawMinos(tetris.renderer, &displayCord, &nextMinos);
@@ -310,16 +320,18 @@ int main(int argc, char* argv[]) {
                 }
             }
 
+            convertScore(scoreString, score);
+
             SDL_SetRenderDrawColor(tetris.renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
             SDL_RenderClear(tetris.renderer);
-            SDL_RenderCopy(tetris.renderer, digitTexture[8], NULL, &fontWin);
+            renderScore(tetris.renderer, scoreString, digitTexture, 10, 10);
             break;
         }
 
         /* Limit Frame */
-        timeCur = SDL_GetTicks();
-        if ((timeCur - timeStart) < frameTime)
-            SDL_Delay(frameTime - (timeCur - timeStart));
+        timeEnd = SDL_GetTicks();
+        if ((timeEnd - timeStart) < frameTime)
+            SDL_Delay(frameTime - (timeEnd - timeStart));
 
         /* Present Renderer */
         SDL_RenderPresent(tetris.renderer);

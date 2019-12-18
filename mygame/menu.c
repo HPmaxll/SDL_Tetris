@@ -14,6 +14,8 @@ char* menuSelect[MENU_COUNT] = {
     "+ Quit +"
 };
 
+
+
 SDL_Color menuFg = { 0, 0, 100, 255 };
 SDL_Color menuBg = { 255, 255, 255, 255 };
 SDL_Rect menuWin = { (WIN_WIDTH - 300) / 2, 80, 300, 128 };
@@ -34,4 +36,34 @@ SDL_Texture* getCharTexture(SDL_Renderer* renderer, TTF_Font* font, SDL_Color co
     SDL_Texture* Texture = SDL_CreateTextureFromSurface(renderer, surf);
     SDL_FreeSurface(surf);
     return Texture;
+}
+
+int initScore(char* score) {
+    for (int i = 0; i < SCORE_LENGTH - 1; i++) {
+        score[i] = '0';
+    }
+    return 0;
+}
+
+int convertScore(char* scoreString, int score) {
+    int i = 0;
+    int tmp;
+    do {
+        tmp = score % 10;
+        score /= 10;
+     
+        scoreString[SCORE_LENGTH - 2 - i] = tmp + '0';
+        i++;
+    } while (score != 0);
+    
+    return 0;
+}
+
+int renderScore(SDL_Renderer* renderer, char* scoreString, SDL_Texture** digitTexture, int x, int y) {
+    int n;
+    for (int i = 0; i < SCORE_LENGTH - 1; i++) {
+        n = scoreString[i] - '0';
+        SDL_RenderCopy(renderer, digitTexture[n], NULL, &(SDL_Rect) {x + i * DIGIT_WIDTH, y, DIGIT_WIDTH, DIGIT_HEIGHT});
+    }
+    return 0;
 }
