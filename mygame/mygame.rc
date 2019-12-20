@@ -52,7 +52,7 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_ICON1               ICON                    "assets\\game.ico"
+IDI_ICON1               ICON                    "C:\\Users\\Orter\\source\\repos\\mygame\\x64\\Debug\\assets\\game.ico"
 
 #endif    // 中文(简体，中国) resources
 /////////////////////////////////////////////////////////////////////////////

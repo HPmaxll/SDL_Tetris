@@ -5,8 +5,8 @@
 #define WIN_HEIGHT 600
 #define FPS 60
 
-#define DIGIT_WIDTH 12
-#define DIGIT_HEIGHT 24
+#define CHAR_WIDTH 10
+#define CHAR_HEIGHT 24
 
 #define BLOCK_WIDTH 22
 #define BLOCK_GAP 3

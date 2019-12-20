@@ -161,7 +161,7 @@
     <ResourceCompile Include="mygame.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="assets\game.ico" />
+    <Image Include="..\x64\Debug\assets\game.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

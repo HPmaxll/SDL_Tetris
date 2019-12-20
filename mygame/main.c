@@ -6,14 +6,6 @@
 
 int main(int argc, char* argv[]) {
 
-    SDL_Window* window;
-    GAME tetris;
-    SDL_Texture * TitleTexture, * overTexture, * pauseTexture;
-    SDL_Texture* MainOption[3];
-    SDL_Texture* MainOptionFocus[3];
-    SDL_Texture* digitTexture[10];
-    TTF_Font* TitleFont, *MainOptionFont;
-
     Uint32 timeStart, timeEnd, curTime, prevTime;
     int frameTime = 1000 / FPS;
     int fallingTime = 500;
@@ -21,11 +13,17 @@ int main(int argc, char* argv[]) {
     int refpos[26][14];
     MINOS curMinos, nextMinos;
     vector tetrisCord, tmpCord, displayCord;
-    SDL_Rect popupBack = { 0, (WIN_HEIGHT - 80) / 2, WIN_WIDTH, 70 };
     int menuFocus = 0;
     char scoreString[SCORE_LENGTH] = "0000000000\0";
     int score = 0;
-    
+
+    SDL_Window* window;
+    GAME tetris;
+    SDL_Texture* ASCII[95];
+    SDL_Texture* TitleTexture, * overTexture, * pauseTexture;
+    TTF_Font* TitleFont, * MainOptionFont;
+    SDL_Rect popupBack = { 0, (WIN_HEIGHT - 80) / 2, WIN_WIDTH, 70 };
+
     SDL_Init(SDL_INIT_EVERYTHING);
     TTF_Init();
 
@@ -51,14 +49,8 @@ int main(int argc, char* argv[]) {
     MainOptionFont = TTF_OpenFont("assets/fonts/NotoSansMonoCJKsc-Regular.otf", 128);
 
     TitleTexture = getFontTexture(tetris.renderer, TitleFont, menuFg, "Tetris");
-    for (int i = 0; i < 3; i++) {
-        MainOption[i] = getFontTexture(tetris.renderer, MainOptionFont, menuFg, menuOption[i]);
-    }
-    for (int i = 0; i < 3; i++) {
-        MainOptionFocus[i] = getFontTexture(tetris.renderer, MainOptionFont, menuFg, menuSelect[i]);
-    }
-    for (int i = 0; i < 10; i++) {
-        digitTexture[i] = getCharTexture(tetris.renderer, MainOptionFont, menuFg, i + 48);
+    for (int i = 0; i < 95; i++) {
+        ASCII[i] = getCharTexture(tetris.renderer, MainOptionFont, menuFg, i + 32);
     }
     overTexture = getFontTexture(tetris.renderer, TitleFont, (SDL_Color) {0, 0, 0, 255}, "GAME OVER");
     pauseTexture = getFontTexture(tetris.renderer, TitleFont, (SDL_Color) { 125, 125, 125, 255 }, "  PAUSE  ");
@@ -128,13 +120,11 @@ int main(int argc, char* argv[]) {
             for (int i = 0; i < 3; i++) {
                 if (i == menuFocus) {
                     size_t optLen = strlen(menuSelect[i]);
-                    SDL_Rect tmpRect = { (WIN_WIDTH - optLen * 10) / 2, 40 * i + 240, optLen * 10, 24 };
-                    SDL_RenderCopy(tetris.renderer, MainOptionFocus[i], NULL, &tmpRect);
+                    renderText(tetris.renderer, menuSelect[i], ASCII, (WIN_WIDTH - optLen * CHAR_WIDTH) / 2, 40 * i + 240, CHAR_WIDTH, CHAR_HEIGHT);
                 }
                 else {
                     size_t optLen = strlen(menuOption[i]);
-                    SDL_Rect tmpRect = { (WIN_WIDTH - optLen * 10) / 2, 40 * i + 240, optLen * 10, 24 };
-                    SDL_RenderCopy(tetris.renderer, MainOption[i], NULL, &tmpRect);
+                    renderText(tetris.renderer, menuOption[i], ASCII, (WIN_WIDTH - optLen * CHAR_WIDTH) / 2, 40 * i + 240, CHAR_WIDTH, CHAR_HEIGHT);
                 }
             }
             break;
@@ -222,14 +212,13 @@ int main(int argc, char* argv[]) {
                 displayCord.x = 8 + getMinosX(&nextMinos);
                 displayCord.y = 6 + getMinosY(&nextMinos);
 
-                
             }
             if (checkGameOver(refpos))
                 tetris.state = GAME_OVER;
 
             SDL_SetRenderDrawColor(tetris.renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
             SDL_RenderClear(tetris.renderer);
-            renderScore(tetris.renderer, scoreString, digitTexture, tetrisWin_x, 10);
+            renderText(tetris.renderer, scoreString, ASCII, tetrisWin_x, 10, 12, 24);
             drawGrid(tetris.renderer);
             drawRecord(tetris.renderer, refpos);
             drawMinos(tetris.renderer, &displayCord, &nextMinos);
@@ -324,7 +313,7 @@ int main(int argc, char* argv[]) {
 
             SDL_SetRenderDrawColor(tetris.renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
             SDL_RenderClear(tetris.renderer);
-            renderScore(tetris.renderer, scoreString, digitTexture, 10, 10);
+            renderText(tetris.renderer, scoreString, ASCII, 10, 10, 12, 24);
             break;
         }
 

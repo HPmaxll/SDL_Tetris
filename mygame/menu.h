@@ -22,5 +22,5 @@ SDL_Texture* getFontTexture(SDL_Renderer*, TTF_Font*, SDL_Color, const char*);
 SDL_Texture* getCharTexture(SDL_Renderer*, TTF_Font*, SDL_Color, Uint16);
 int initScore(char*);
 int convertScore(char*, int);
-int renderScore(SDL_Renderer*, char*, SDL_Texture**, int x, int y);
+int renderText(SDL_Renderer*, char*, SDL_Texture**, int, int, int, int);
 #endif
