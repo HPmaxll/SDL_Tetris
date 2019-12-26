@@ -9,42 +9,54 @@ const int tetrisWin_x = (WIN_WIDTH - TETRIS_WIDTH) / 2;
 const int tetrisWin_y = (WIN_HEIGHT - TETRIS_HEIGHT) / 2;
 const int blockSpace = (BLOCK_WIDTH + BLOCK_GAP);
 
+const SDL_Color tetris_color[9] = {
+    {255, 0, 0, 255},
+    {255, 165, 0, 255},
+    {255, 255, 0, 255},
+    {0, 255, 0, 255},
+    {0, 255, 255, 255},
+    {0, 0, 255, 255},
+    {139, 0, 255, 255},
+    {0, 0, 0, 255},
+    {255, 255, 255, 255}
+};
+
 const MINOS minos[7][4] = {
     {
-        { {0,0,0,0},{-2,-1,0,1} },
-        { {-1,0,1,2},{0,0,0,0} },
-        { {0,0,0,0},{-1,0,1,2} },
-        { {-2,-1,0,1},{0,0,0,0} }},
+        { {0,0,0,0},{-2,-1,0,1},1 },
+        { {-1,0,1,2},{0,0,0,0},1 },
+        { {0,0,0,0},{-1,0,1,2},1 },
+        { {-2,-1,0,1},{0,0,0,0},1 }},
     {
-        { {0,0,1,1},{0,1,0,1} },
-        { {0,0,1,1},{0,1,0,1} },
-        { {0,0,1,1},{0,1,0,1} },
-        { {0,0,1,1},{0,1,0,1} }},
+        { {0,0,1,1},{0,1,0,1},2 },
+        { {0,0,1,1},{0,1,0,1},2 },
+        { {0,0,1,1},{0,1,0,1},2 },
+        { {0,0,1,1},{0,1,0,1},2 }},
     {
-        { {-1,-1,0,0},{-1,0,0,1} },
-        { {-1,0,0,1},{0,-1,0,-1} },
-        { {0,0,1,1},{-1,0,0,1} },
-        { {-1,0,0,1},{1,0,1,0} }},
+        { {-1,-1,0,0},{-1,0,0,1},3 },
+        { {-1,0,0,1},{0,-1,0,-1},3 },
+        { {0,0,1,1},{-1,0,0,1},3 },
+        { {-1,0,0,1},{1,0,1,0},3 }},
     {
-        { {-1,-1,0,0},{0,1,-1,0} },
-        { {-1,0,0,1},{-1,-1,0,0} },
-        { {0,0,1,1},{0,1,-1,0} },
-        { {-1,0,0,1},{0,0,1,1} }},
+        { {-1,-1,0,0},{0,1,-1,0},4 },
+        { {-1,0,0,1},{-1,-1,0,0},4 },
+        { {0,0,1,1},{0,1,-1,0},4 },
+        { {-1,0,0,1},{0,0,1,1},4 }},
     {
-        { {-1,0,0,0},{-1,-1,0,1} },
-        { {-1,0,1,1},{0,0,-1,0} },
-        { {0,0,0,1},{-1,0,1,1} },
-        { {-1,-1,0,1},{0,1,0,0} }},
+        { {-1,0,0,0},{-1,-1,0,1},5 },
+        { {-1,0,1,1},{0,0,-1,0},5 },
+        { {0,0,0,1},{-1,0,1,1},5 },
+        { {-1,-1,0,1},{0,1,0,0},5 }},
     {
-        { {-1,0,0,0},{0,-1,0,1} },
-        { {-1,0,0,1},{0,-1,0,0} },
-        { {0,0,0,1},{-1,0,1,0} },
-        { {-1,0,0,1},{0,0,1,0} }},
+        { {-1,0,0,0},{0,-1,0,1},6 },
+        { {-1,0,0,1},{0,-1,0,0},6 },
+        { {0,0,0,1},{-1,0,1,0},6 },
+        { {-1,0,0,1},{0,0,1,0},6 }},
     {
-        { {-1,0,0,0},{1,-1,0,1} },
-        { {-1,-1,0,1},{-1,0,0,0} },
-        { {0,0,0,1},{-1,0,1,-1} },
-        { {-1,0,1,1},{0,0,0,1} }}
+        { {-1,0,0,0},{1,-1,0,1},7 },
+        { {-1,-1,0,1},{-1,0,0,0},7 },
+        { {0,0,0,1},{-1,0,1,-1},7 },
+        { {-1,0,1,1},{0,0,0,1},7 }}
 };
 
 const int refaxis[26][14] = {
@@ -83,13 +95,12 @@ int randint(void)
 }
 
 int drawMinos(SDL_Renderer* renderer, vector* point, MINOS* minos) {
-
-    SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+    SDL_Color tmpColor = tetris_color[minos->color - 1];
+    SDL_SetRenderDrawColor(renderer, tmpColor.r, tmpColor.g, tmpColor.b, tmpColor.a);
     for (int i = 0; i < 4; i++) {
         if (minos->offset_y[i] + point->y >= 4)
             drawBlock(renderer, minos->offset_x[i] + point->x, minos->offset_y[i] + point->y - 4);
     }
-
     return 0;
 }
 
@@ -107,8 +118,11 @@ int drawBlock(SDL_Renderer* renderer, int x, int y) {
 int drawRecord(SDL_Renderer* renderer, int(*pos)[14]) {
     for (int i = 2; i < 12; i++) {
         for (int j = 4; j < 24; j++) {
-            if (pos[j][i] == 1)
+            if (pos[j][i] != 0) {
+                SDL_Color tmpColor = tetris_color[pos[j][i] - 1];
+                SDL_SetRenderDrawColor(renderer, tmpColor.r, tmpColor.g, tmpColor.b, tmpColor.a);
                 drawBlock(renderer, i - 2, j - 4);
+            }
         }
     }
     return 0;
@@ -117,7 +131,7 @@ int drawRecord(SDL_Renderer* renderer, int(*pos)[14]) {
 int drawGrid(SDL_Renderer* renderer) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderDrawRect(renderer, &tetrisWin);
-    SDL_SetRenderDrawColor(renderer, 100, 200, 220, 0);
+    SDL_SetRenderDrawColor(renderer, 230, 230, 230, 0);
     for (int i = 1; i < 10; i++)
         SDL_RenderDrawLine(renderer, tetrisWin_x + i * blockSpace, tetrisWin_y, tetrisWin_x + i * blockSpace, tetrisWin_y + TETRIS_HEIGHT - 1);
     for (int i = 1; i < 20; i++)
@@ -131,7 +145,7 @@ bool minosCollide(vector* point, int(*pos)[14], const MINOS* shape) {
     for (int i = 0; i < 4; i++) {
         pos_y = point->y + shape->offset_y[i];
         pos_x = point->x + 2 + shape->offset_x[i];
-        if (pos[pos_y][pos_x] == 1) {
+        if (pos[pos_y][pos_x] != 0) {
             collision = true;
             break;
         }
@@ -141,7 +155,7 @@ bool minosCollide(vector* point, int(*pos)[14], const MINOS* shape) {
 
 int setAxis(vector* point, MINOS* minos, int(*pos)[14]) {
     for (int i = 0; i < 4; i++) {
-        pos[minos->offset_y[i] + point->y][minos->offset_x[i] + point->x + 2] = 1;
+        pos[minos->offset_y[i] + point->y][minos->offset_x[i] + point->x + 2] = minos->color;
     }
     return 0;
 }
@@ -171,7 +185,7 @@ int unsetAxis(int(*pos)[14]) {
 bool checkGameOver(int(*pos)[14]) {
     for (int i = 2; i < 12; i++) {
         for (int j = 3; j >= 0; j--) {
-            if (pos[j][i] == 1)
+            if (pos[j][i] != 0)
                 return true;
         }
     }
@@ -194,7 +208,7 @@ int modify_x(int prev_left, int prev_right, int y, int x, int(*pos)[14], const M
             right = 1;
             break;
         }
-        if (pos[pos_y][pos_x] == 1) {
+        if (pos[pos_y][pos_x] != 0) {
             if (pos_x < x + 2)
                 left = 1;
             if (pos_x > x + 2)
@@ -219,7 +233,7 @@ int modify_y(int prev_up, int prev_down, int y, int x, int(*pos)[14], const MINO
     for (i = 0; i < 4; i++) {
         pos_y = y + shape->offset_y[i];
         pos_x = x + 2 + shape->offset_x[i];
-        if (pos[pos_y][pos_x] == 1) {
+        if (pos[pos_y][pos_x] != 0) {
             if (pos_y < y) {
                 if (pos[pos_y + 1][pos_x] == 1)
                     return -1;
@@ -275,15 +289,6 @@ int rotateMinos(int* minosAngle, int minosType, vector* point, int(*pos)[14]) {
     return 0;
 }
 
-int print_axis(int(*pos)[14]) {
-    for (int i = 0; i < 24; i++) {
-        for (int j = 2; j < 12; j++)
-            printf("%d", pos[i][j]);
-        printf("\n");
-    }
-    printf("\n\n");
-    return 0;
-}
 int getMinosY(MINOS* minos) {
     int max = 0;
     for (int i = 0; i < 4; i++) {

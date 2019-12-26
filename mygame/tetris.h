@@ -21,6 +21,7 @@ typedef struct {
 typedef struct {
     int offset_y[4];
     int offset_x[4];
+    int color;
 } MINOS;
 
 typedef struct {
@@ -34,7 +35,7 @@ extern const SDL_Rect tetrisWin;
 extern const int tetrisWin_x, tetrisWin_y, blockSpace;
 extern const MINOS minos[7][4];
 extern const int refaxis[26][14];
-
+extern const SDL_Color tetris_color[9];
 
 int randint();
 int drawMinos(SDL_Renderer*, vector*, MINOS*);
@@ -48,7 +49,6 @@ bool checkGameOver(int(*)[14]);
 int modify_x(int, int, int, int, int(*)[14], const MINOS*);
 int modify_y(int, int, int, int, int(*)[14], const MINOS*);
 int rotateMinos(int*, int, vector*, int(*)[14]);
-int print_axis(int(*)[14]);
 int getMinosY(MINOS*);
 int getMinosX(MINOS*);
 #endif
