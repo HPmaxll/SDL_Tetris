@@ -9,16 +9,14 @@ const int tetrisWin_x = (WIN_WIDTH - TETRIS_WIDTH) / 2;
 const int tetrisWin_y = (WIN_HEIGHT - TETRIS_HEIGHT) / 2;
 const int blockSpace = (BLOCK_WIDTH + BLOCK_GAP);
 
-const SDL_Color tetris_color[9] = {
+const SDL_Color tetris_color[] = {
     {255, 0, 0, 255},
     {255, 165, 0, 255},
     {255, 255, 0, 255},
     {0, 255, 0, 255},
     {0, 255, 255, 255},
     {0, 0, 255, 255},
-    {139, 0, 255, 255},
-    {0, 0, 0, 255},
-    {255, 255, 255, 255}
+    {139, 0, 255, 255}
 };
 
 const MINOS minos[7][4] = {
@@ -129,9 +127,7 @@ int drawRecord(SDL_Renderer* renderer, int(*pos)[14]) {
 }
 
 int drawGrid(SDL_Renderer* renderer) {
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-    SDL_RenderDrawRect(renderer, &tetrisWin);
-    SDL_SetRenderDrawColor(renderer, 230, 230, 230, 0);
+    SDL_SetRenderDrawColor(renderer, 230, 230, 230, 255);
     for (int i = 1; i < 10; i++)
         SDL_RenderDrawLine(renderer, tetrisWin_x + i * blockSpace, tetrisWin_y, tetrisWin_x + i * blockSpace, tetrisWin_y + TETRIS_HEIGHT - 1);
     for (int i = 1; i < 20; i++)

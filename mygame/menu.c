@@ -11,6 +11,7 @@ SDL_Texture* loadImageFile(SDL_Renderer* renderer, char* image) {
 }
 SDL_Texture* getFontTexture(SDL_Renderer* renderer, TTF_Font* font, SDL_Color color, const char* text) {
     SDL_Surface* surf = TTF_RenderText_Blended(font, text, color);
+    //printf("%d, %d\n", surf->w, surf->h);
     SDL_Texture* Texture = SDL_CreateTextureFromSurface(renderer, surf);
     SDL_FreeSurface(surf);
     return Texture;
@@ -38,14 +39,14 @@ bool withinRect(SDL_Rect* rect, int x, int y) {
         return false;
 }
 
-int initScore(char* score) {
-    for (int i = 0; i < SCORE_LENGTH - 1; i++) {
-        score[i] = '0';
+int initScore(char* scoreString) {
+    for (int i = 7; i < SCORE_LENGTH - 1; i++) {
+        scoreString[i] = '0';
     }
     return 0;
 }
 
-int convertScore(char* scoreString, int score) {
+int convertScore(char* scoreString, long score) {
     int i = 0;
     int tmp;
     do {

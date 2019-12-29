@@ -10,7 +10,7 @@
 #define BLOCK_WIDTH 22
 #define BLOCK_GAP 3
 
-#define SCORE_LENGTH 11
+#define SCORE_LENGTH 18
 
 #define TETRIS_SIZE_W 10
 #define TETRIS_SIZE_H 20

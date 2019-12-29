@@ -21,6 +21,6 @@ SDL_Texture* getCharTexture(SDL_Renderer*, TTF_Font*, SDL_Color, Uint16);
 void drawRectWithBorder(SDL_Renderer*, SDL_Rect*, SDL_Color, SDL_Color);
 bool withinRect(SDL_Rect*, int, int);
 int initScore(char*);
-int convertScore(char*, int);
+int convertScore(char*, long);
 int renderText(SDL_Renderer*, char*, SDL_Texture**, int, int, int, int);
 #endif

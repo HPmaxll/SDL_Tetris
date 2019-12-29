@@ -1,20 +1,10 @@
 #include <stdio.h>
 #include <string.h>
+#include <io.h>
 #include "tetris.h"
 #include "menu.h"
+#include "config.h"
 #include "constants.h"
-
-int FPS = 60;
-int fallingTime = 500;
-int level = 1;
-int menuFocus = 0;
-int optFocus = 0;
-int menuID = 0;
-int score = 0;
-int bg_index = 0;
-int gridState = 0;
-
-char scoreString[SCORE_LENGTH] = "0000000000\0";
 
 char* mainMenu[] = {
     "Start",
@@ -23,9 +13,15 @@ char* mainMenu[] = {
 };
 
 char* optMenu[] = {
-    "Background Color:",
-    "Level:",
+    "Color Scheme:",
+    "Start Level:",
     "Grid:"
+};
+
+char* pauseMenu[] = {
+    "Continue",
+    "Return To Title",
+    "Quit"
 };
 
 char* switchStr[] = {
@@ -33,16 +29,40 @@ char* switchStr[] = {
     "Off"
 };
 
+const int fallSpeed[9] = {
+    500, 400, 300, 250, 200, 150, 100, 80, 50
+};
+
+char scoreString[] = "Score: 0000000000\0";
+char levelString[] = "Level: 1\0";
+
 SDL_Color menuFg = { 0, 0, 100, 255 };
 SDL_Rect menuWin = { (WIN_WIDTH - 361) / 2, 80, 361, 128 };
-SDL_Rect popupWin = { (WIN_WIDTH - 240) / 2, (WIN_HEIGHT - 64) / 2, 240, 64 };
 
 int main(int argc, char* argv[]) {
 
-    Uint32 timeStart, timeEnd, curTime, prevTime;
+    ITEM tetris_config[OPTSIZE];
+    memcpy(tetris_config, default_config, OPTSIZE * sizeof(ITEM));
+    if (_access(CONFIG_FILE, 0) == 0)
+        parse_config(tetris_config);
+    else
+        save_config(tetris_config);
+    
+    int startLevel = tetris_config[STARTLEVEL].value + 1;
+    int gridState = tetris_config[GRID].value;
+    int colorScheme = tetris_config[COLORSCHEME].value;
+    int FPS = 60;
+    int menuFocus = 0;
+    int optFocus = 0;
+    int pauseFocus = 0;
+    int menuID = 0;
+    long score = 0;
+    int flashFlag = 0;
+    Uint32 frameStart, frameEnd, curTime, prevTime, flashStart, flashEnd;
     int frameTime = 1000 / FPS;
     
-    int minosType, minosAngle, nextType, nextAngle, removeCount;
+    int minosType, minosAngle, nextType, nextAngle, removeCount, level = startLevel;
+    long lineCount = 0;
     int refpos[26][14];
     MINOS curMinos, nextMinos;
     vector tetrisCord, tmpCord, displayCord;
@@ -51,8 +71,7 @@ int main(int argc, char* argv[]) {
     GAME tetris;
     SDL_Texture * ASCII[95];
     SDL_Texture * TitleTexture, * overTexture, * pauseTexture, * focusLeft, * focusRight;
-    TTF_Font * TitleFont, * MainOptionFont;
-    SDL_Rect popupBack = { 0, (WIN_HEIGHT - 80) / 2, WIN_WIDTH, 70 };
+    TTF_Font * TitleFont, * MainOptionFont, * subTitleFont;
 
     SDL_Init(SDL_INIT_EVERYTHING);
     TTF_Init();
@@ -67,6 +86,7 @@ int main(int argc, char* argv[]) {
     );
 
     if (window == NULL) {
+
         printf("Could not create window: %s\n", SDL_GetError());
         return 1;
     }
@@ -77,26 +97,29 @@ int main(int argc, char* argv[]) {
     );
   
     TitleFont = TTF_OpenFont("assets/fonts/BasculaCollege.ttf", 128);
+    subTitleFont = TTF_OpenFont("assets/fonts/BasculaCollege.ttf", 48);
     MainOptionFont = TTF_OpenFont("assets/fonts/NotoSansMonoCJKsc-Regular.otf", 20);
 
-    TitleTexture = getFontTexture(tetris.renderer, TitleFont, menuFg, "Tetris");
+    TitleTexture = getFontTexture(tetris.renderer, TitleFont, tetris_color[7], "Tetris");
     for (int i = 0; i < 95; i++) {
-        ASCII[i] = getCharTexture(tetris.renderer, MainOptionFont, menuFg, i + 32);
+        ASCII[i] = getCharTexture(tetris.renderer, MainOptionFont, tetris_color[7], i + 32);
     }
-    overTexture = getFontTexture(tetris.renderer, TitleFont, (SDL_Color) {0, 0, 0, 255}, "GAME OVER");
-    pauseTexture = getFontTexture(tetris.renderer, TitleFont, (SDL_Color) { 125, 125, 125, 255 }, "  PAUSE  ");
+    overTexture = getFontTexture(tetris.renderer, subTitleFont, (SDL_Color) {0, 0, 0, 255}, "GAME OVER");
+    pauseTexture = getFontTexture(tetris.renderer, subTitleFont, (SDL_Color) { 125, 125, 225, 255 }, "  PAUSE  ");
 
     TTF_CloseFont(TitleFont);
+    TTF_CloseFont(subTitleFont);
     TTF_CloseFont(MainOptionFont);
 
     focusLeft = loadImageFile(tetris.renderer, "assets/pics/left.png");
     focusRight = loadImageFile(tetris.renderer, "assets/pics/right.png");
 
     tetris.state = IN_MENU;
+    SDL_SetRenderDrawBlendMode(tetris.renderer, SDL_BLENDMODE_BLEND);
     /* Game Loop */
     while (tetris.state != QUIT) {
 
-        timeStart = SDL_GetTicks();
+        frameStart = SDL_GetTicks();
 
         SDL_Event event;
         switch (tetris.state) {
@@ -126,6 +149,8 @@ int main(int argc, char* argv[]) {
                             switch (menuFocus) {
                             case 0:
                                 tetris.state = GAME_RUN;
+                                levelString[7] = startLevel + '0';
+                                level = startLevel;
                                 SDL_memcpy(refpos, refaxis, sizeof(refaxis));
                                 prevTime = SDL_GetTicks();
                                 minosType = randint() % 7;
@@ -139,6 +164,9 @@ int main(int argc, char* argv[]) {
                                 nextMinos = minos[nextType][nextAngle];
                                 displayCord.x = 8 + getMinosX(&nextMinos);
                                 displayCord.y = 6 + getMinosY(&nextMinos);
+
+                                initScore(scoreString);
+                                score = 0;
                                 break;
                             case 1:
                                 menuID = 1;
@@ -163,8 +191,8 @@ int main(int argc, char* argv[]) {
                     size_t optLen = strlen(mainMenu[i]);
                     renderText(tetris.renderer, mainMenu[i], ASCII, (WIN_WIDTH - optLen * CHAR_WIDTH) / 2, 40 * i + 240, CHAR_WIDTH, CHAR_HEIGHT);
                 }
-                SDL_RenderCopy(tetris.renderer, focusLeft, NULL, &(SDL_Rect) {210, 40 * menuFocus + 245, 20, 20});
-                SDL_RenderCopy(tetris.renderer, focusRight, NULL, &(SDL_Rect) {WIN_WIDTH - 230, 40 * menuFocus + 245, 20, 20});
+                SDL_RenderCopy(tetris.renderer, focusLeft, NULL, &(SDL_Rect) {WIN_WIDTH - 230, 40 * menuFocus + 245, 23, 23});
+                SDL_RenderCopy(tetris.renderer, focusRight, NULL, &(SDL_Rect) {206, 40 * menuFocus + 245, 23, 23});
                 break;
 
             case 1:
@@ -177,18 +205,14 @@ int main(int argc, char* argv[]) {
                         case SDL_SCANCODE_LEFT:
                             switch (optFocus) {
                             case 0:
-                                if (bg_index > 0)
-                                    bg_index -= 1;
+                                colorScheme ^= 1;
                                 break;
                             case 1:
-                                if (level > 1)
-                                    level -= 1;
+                                if (startLevel > 1)
+                                    startLevel -= 1;
                                 break;
                             case 2:
-                                if (gridState == 1)
-                                    gridState = 0;
-                                else
-                                    gridState = 1;
+                                gridState ^= 1;
                                 break;
                             }
                             break;
@@ -196,18 +220,14 @@ int main(int argc, char* argv[]) {
                         case SDL_SCANCODE_RIGHT:
                             switch (optFocus) {
                             case 0:
-                                if (bg_index < 8)
-                                    bg_index += 1;
+                                colorScheme ^= 1;
                                 break;
                             case 1:
-                                if (level < 5)
-                                    level += 1;
+                                if (startLevel < 9)
+                                    startLevel += 1;
                                 break;
                             case 2:
-                                if (gridState == 0)
-                                    gridState = 1;
-                                else
-                                    gridState = 0;
+                                gridState ^= 1;
                                 break;
                             }
                             break;
@@ -224,6 +244,7 @@ int main(int argc, char* argv[]) {
                                 optFocus = 0;
                             break;
                         case SDL_SCANCODE_RETURN:
+                            optFocus = 0;
                             menuID = 0;
                             break;
                         }
@@ -238,30 +259,27 @@ int main(int argc, char* argv[]) {
                 SDL_RenderCopy(tetris.renderer, TitleTexture, NULL, &menuWin);
                 
                 SDL_SetRenderDrawColor(tetris.renderer, 160, 160, 160, 255);
-                SDL_RenderFillRect(tetris.renderer, &(SDL_Rect) {(WIN_WIDTH - 320) / 2 + 5, 225, 320, 200});
+                SDL_RenderFillRect(tetris.renderer, &(SDL_Rect) {(WIN_WIDTH - 320) / 2 + 5, 225, 320, 160});
                 
-                drawRectWithBorder(tetris.renderer, &(SDL_Rect) {(WIN_WIDTH - 320) / 2, 220, 320, 200}, tetris_color[8], tetris_color[7]);
+                drawRectWithBorder(tetris.renderer, &(SDL_Rect) {(WIN_WIDTH - 320) / 2, 220, 320, 160}, Scheme[0], Scheme[1]);
                 
                 for (int i = 0; i < MENU_COUNT; i++) {
                     size_t optLen = strlen(optMenu[i]);
                     renderText(tetris.renderer, optMenu[i], ASCII, (WIN_WIDTH - 300) / 2, 40 * i + 240, CHAR_WIDTH, CHAR_HEIGHT);
                 }
 
-                drawRectWithBorder(tetris.renderer, &(SDL_Rect){355, 245, 25, 25}, tetris_color[bg_index], tetris_color[7]);
-                renderText(tetris.renderer, (char[2]) { level + '0', '\0' }, ASCII, 360, 280, CHAR_WIDTH, CHAR_HEIGHT);
-                renderText(tetris.renderer, switchStr[gridState], ASCII, 360, 320, CHAR_WIDTH, CHAR_HEIGHT);
+                drawRectWithBorder(tetris.renderer, &(SDL_Rect){356, 245, 25, 25}, Scheme[colorScheme], Scheme[1]);
+                renderText(tetris.renderer, (char[2]) { startLevel + '0', '\0' }, ASCII, 361, 280, CHAR_WIDTH, CHAR_HEIGHT);
+                renderText(tetris.renderer, switchStr[gridState], ASCII, 356, 320, CHAR_WIDTH, CHAR_HEIGHT);
 
-                SDL_RenderCopy(tetris.renderer, focusLeft, NULL, &(SDL_Rect) {325, 40 * optFocus + 245, 20, 20});
-                SDL_RenderCopy(tetris.renderer, focusRight, NULL, &(SDL_Rect) {390, 40 * optFocus + 245, 20, 20});
+                SDL_RenderCopy(tetris.renderer, focusLeft, NULL, &(SDL_Rect) {325, 40 * optFocus + 245, 23, 23});
+                SDL_RenderCopy(tetris.renderer, focusRight, NULL, &(SDL_Rect) {390, 40 * optFocus + 245, 23, 23});
                 break;
             }
             break;
 
         case GAME_RUN:
-
-            /* Handle Event */
             while (SDL_PollEvent(&event)) {
-
                 switch (event.type) {
                 case SDL_MOUSEBUTTONUP:
                     switch (event.button.button) {
@@ -304,6 +322,7 @@ int main(int argc, char* argv[]) {
                         break;
 
                     case SDL_SCANCODE_RETURN:
+                    case SDL_SCANCODE_ESCAPE:
                         tetris.state = GAME_PAUSE;
                         break;
                     }
@@ -314,9 +333,8 @@ int main(int argc, char* argv[]) {
                 }
             }
 
-            /* Game Logic */
             curTime = SDL_GetTicks();
-            if (curTime - prevTime >= fallingTime) {
+            if (curTime - prevTime >= fallSpeed[level - 1]) {
                 tetrisCord.y += 1;
                 prevTime = curTime;
             }
@@ -324,8 +342,12 @@ int main(int argc, char* argv[]) {
                 tetrisCord.y -= 1;
                 setAxis(&tetrisCord, &curMinos, refpos);
                 removeCount = unsetAxis(refpos);
-
-                score += removeCount * removeCount * 100;
+                lineCount += removeCount;
+                if (lineCount / 15 > level - 1) {
+                    level += 1;
+                    levelString[7] = level + '0';
+                }
+                score += removeCount * removeCount * level * 100;
                 convertScore(scoreString, score);
 
                 minosType = nextType;
@@ -341,13 +363,20 @@ int main(int argc, char* argv[]) {
                 displayCord.y = 6 + getMinosY(&nextMinos);
 
             }
-            if (checkGameOver(refpos))
+            if (checkGameOver(refpos)) {
                 tetris.state = GAME_OVER;
+                lineCount = 0;
+                flashStart = SDL_GetTicks();
+            }
 
             SDL_SetRenderDrawColor(tetris.renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
             SDL_RenderClear(tetris.renderer);
-            renderText(tetris.renderer, scoreString, ASCII, tetrisWin_x, 10, 10, 30);
-            drawGrid(tetris.renderer);
+            renderText(tetris.renderer, levelString, ASCII, tetrisWin_x - 10, 10, 10, 30);
+            renderText(tetris.renderer, scoreString, ASCII, tetrisWin_x + 90, 10, 10, 30);
+            if (gridState == 0)
+                drawGrid(tetris.renderer);
+            SDL_SetRenderDrawColor(tetris.renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+            SDL_RenderDrawRect(tetris.renderer, &tetrisWin);
             drawRecord(tetris.renderer, refpos);
             drawMinos(tetris.renderer, &displayCord, &nextMinos);
             drawMinos(tetris.renderer, &tetrisCord, &curMinos);
@@ -361,11 +390,32 @@ int main(int argc, char* argv[]) {
                     switch (event.key.keysym.scancode) {
                     case SDL_SCANCODE_UP:
                     case SDL_SCANCODE_W:
+                        pauseFocus -= 1;
+                        if (pauseFocus < 0)
+                            pauseFocus = 2;
                         break;
                     case SDL_SCANCODE_DOWN:
                     case SDL_SCANCODE_S:
+                        pauseFocus += 1;
+                        if (pauseFocus > 2)
+                            pauseFocus = 0;
                         break;
                     case SDL_SCANCODE_RETURN:
+                        switch (pauseFocus) {
+                        case 0:
+                            tetris.state = GAME_RUN;
+                            break;
+                        case 1:
+                            tetris.state = IN_MENU;
+                            break;
+                        case 2:
+                            tetris.state = QUIT;
+                            break;
+                        }
+                        pauseFocus = 0;
+                        break;
+                    case SDL_SCANCODE_ESCAPE:
+                        pauseFocus = 0;
                         tetris.state = GAME_RUN;
                         break;
                     }
@@ -378,28 +428,33 @@ int main(int argc, char* argv[]) {
 
             SDL_SetRenderDrawColor(tetris.renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
             SDL_RenderClear(tetris.renderer);
-            drawGrid(tetris.renderer);
+            renderText(tetris.renderer, levelString, ASCII, tetrisWin_x - 10, 10, 10, 30);
+            renderText(tetris.renderer, scoreString, ASCII, tetrisWin_x + 90, 10, 10, 30);
+            if (gridState == 0)
+                drawGrid(tetris.renderer);
+            SDL_SetRenderDrawColor(tetris.renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+            SDL_RenderDrawRect(tetris.renderer, &tetrisWin);
             drawRecord(tetris.renderer, refpos);
-            SDL_SetRenderDrawColor(tetris.renderer, 255, 100, 100, SDL_ALPHA_OPAQUE);
-            SDL_RenderFillRect(tetris.renderer, &popupBack);
-            SDL_RenderCopy(tetris.renderer, pauseTexture, NULL, &popupWin);
+            drawMinos(tetris.renderer, &displayCord, &nextMinos);
+            drawMinos(tetris.renderer, &tetrisCord, &curMinos);
+
+            drawRectWithBorder(tetris.renderer, &(SDL_Rect) {(WIN_WIDTH - 320) / 2, 220, 320, 200}, (SDL_Color) { 255, 255, 255, 235 }, Scheme[1]);
+            SDL_RenderCopy(tetris.renderer, pauseTexture, NULL, &(SDL_Rect) {(WIN_WIDTH - 254) / 2, 235, 254, 48});
+            for (int i = 0; i < MENU_COUNT; i++) {
+                size_t optLen = strlen(pauseMenu[i]);
+                renderText(tetris.renderer, pauseMenu[i], ASCII, (WIN_WIDTH - optLen * CHAR_WIDTH) / 2, 40 * i + 285, CHAR_WIDTH, CHAR_HEIGHT);
+            }
+            SDL_RenderCopy(tetris.renderer, focusLeft, NULL, &(SDL_Rect) {380, 40 * pauseFocus + 290, 23, 23});
+            SDL_RenderCopy(tetris.renderer, focusRight, NULL, &(SDL_Rect) {(WIN_WIDTH - 260) / 2, 40 * pauseFocus + 290, 23, 23});
             break;
 
         case GAME_OVER:
             while (SDL_PollEvent(&event)) {
                 switch (event.type) {
                 case SDL_KEYDOWN:
-                    switch (event.key.keysym.scancode) {
-                    case SDL_SCANCODE_UP:
-                    case SDL_SCANCODE_W:
-                        break;
-                    case SDL_SCANCODE_DOWN:
-                    case SDL_SCANCODE_S:
-                        break;
-                    case SDL_SCANCODE_RETURN:
-                        tetris.state = QUIT;
-                        break;
-                    }
+                    tetris.state = IN_MENU;
+                    level = 1;
+                    levelString[7] = level + '0';
                     break;
                 case SDL_QUIT:
                     tetris.state = QUIT;
@@ -407,13 +462,25 @@ int main(int argc, char* argv[]) {
                 }
             }
 
+            flashEnd = SDL_GetTicks();
+            if (flashEnd - flashStart > 500) {
+                flashFlag ^= 1;
+                flashStart = flashEnd;
+            }
+
             SDL_SetRenderDrawColor(tetris.renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
             SDL_RenderClear(tetris.renderer);
-            drawGrid(tetris.renderer);
+            renderText(tetris.renderer, levelString, ASCII, tetrisWin_x - 10, 10, 10, 30);
+            renderText(tetris.renderer, scoreString, ASCII, tetrisWin_x + 90, 10, 10, 30);
+            if (gridState == 0)
+                drawGrid(tetris.renderer);
+            SDL_SetRenderDrawColor(tetris.renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+            SDL_RenderDrawRect(tetris.renderer, &tetrisWin);
             drawRecord(tetris.renderer, refpos);
-            SDL_SetRenderDrawColor(tetris.renderer, 255, 100, 100, SDL_ALPHA_OPAQUE);
-            SDL_RenderFillRect(tetris.renderer, &popupBack);
-            SDL_RenderCopy(tetris.renderer, overTexture, NULL, &popupWin);
+            drawRectWithBorder(tetris.renderer, &(SDL_Rect) {(WIN_WIDTH - 320) / 2, 220, 320, 200}, (SDL_Color) {255, 255, 255, 235}, Scheme[1]);
+            SDL_RenderCopy(tetris.renderer, overTexture, NULL, &(SDL_Rect) {(WIN_WIDTH - 305) / 2, (WIN_WIDTH - 48) / 2, 305, 48});
+            if (flashFlag)
+                renderText(tetris.renderer, "Press Any Key To Continue", ASCII, (WIN_WIDTH - 260) / 2, (WIN_WIDTH - 48) / 2 + 100, 10, 30);
             break;
 
         case IN_TEST:
@@ -440,23 +507,25 @@ int main(int argc, char* argv[]) {
 
             SDL_SetRenderDrawColor(tetris.renderer, 255, 255, 255, 255);
             SDL_RenderClear(tetris.renderer);
-            SDL_SetRenderDrawColor(tetris.renderer, 0, 0, 0, 255);
-            SDL_RenderDrawRect(tetris.renderer, &(SDL_Rect) {(WIN_WIDTH - 200)/2, (WIN_HEIGHT - 200)/2, 200, 200});
-            SDL_SetRenderDrawColor(tetris.renderer, 200, 200, 100, 255);
-            SDL_RenderFillRect(tetris.renderer, &(SDL_Rect) {(WIN_WIDTH - 200) / 2 + 1, (WIN_HEIGHT - 200) / 2 + 1 , 198, 198});
       
             break;
         }
 
         /* Limit Frame */
-        timeEnd = SDL_GetTicks();
-        if ((timeEnd - timeStart) < frameTime)
-            SDL_Delay(frameTime - (timeEnd - timeStart));
+        frameEnd = SDL_GetTicks();
+        if ((frameEnd - frameStart) < frameTime)
+            SDL_Delay(frameTime - (frameEnd - frameStart));
 
         /* Present Renderer */
         SDL_RenderPresent(tetris.renderer);
     }
-
+    tetris_config[STARTLEVEL].value = startLevel - 1;
+    tetris_config[STARTLEVEL].valueStr = config_opt[STARTLEVEL].value[startLevel - 1];
+    tetris_config[GRID].value = gridState;
+    tetris_config[GRID].valueStr = config_opt[GRID].value[gridState];
+    tetris_config[COLORSCHEME].value = colorScheme;
+    tetris_config[COLORSCHEME].valueStr = config_opt[COLORSCHEME].value[colorScheme];
+    save_config(tetris_config);
     SDL_DestroyRenderer(tetris.renderer);
     SDL_DestroyWindow(window);
     TTF_Quit();
