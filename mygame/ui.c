@@ -1,7 +1,28 @@
 #include "constants.h"
-#include "menu.h"
-#include <windows.h>
+#include "ui.h"
 #include <stdio.h>
+#include <string.h>
+
+const SCHEME scheme[2]= {
+    {
+        {255, 255, 255, 255},
+        {0, 165, 200, 255},
+        {255, 255, 255, 255},
+        {0, 255, 0, 255},
+        {240, 240, 240, 255},
+        {230, 230, 230, 255},
+        {120, 120, 120, 255}
+    },
+    {
+        {105, 105, 105, 255},
+        {65, 255, 220, 255},
+        {140, 140, 140, 245},
+        {255, 255, 255, 255},
+        {100, 80, 100, 255},
+        {105, 105, 105, 255},
+        {230, 230, 230, 255}
+    }
+};
 
 SDL_Texture* loadImageFile(SDL_Renderer* renderer, char* image) {
     SDL_Surface* surf = IMG_Load(image);

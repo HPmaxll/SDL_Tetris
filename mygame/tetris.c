@@ -126,12 +126,12 @@ int drawRecord(SDL_Renderer* renderer, int(*pos)[14]) {
     return 0;
 }
 
-int drawGrid(SDL_Renderer* renderer) {
-    SDL_SetRenderDrawColor(renderer, 230, 230, 230, 255);
+int drawGrid(SDL_Renderer* renderer, SDL_Color color) {
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
     for (int i = 1; i < 10; i++)
-        SDL_RenderDrawLine(renderer, tetrisWin_x + i * blockSpace, tetrisWin_y, tetrisWin_x + i * blockSpace, tetrisWin_y + TETRIS_HEIGHT - 1);
+        SDL_RenderDrawLine(renderer, tetrisWin_x + i * blockSpace, tetrisWin_y + 1, tetrisWin_x + i * blockSpace, tetrisWin_y + TETRIS_HEIGHT - 2);
     for (int i = 1; i < 20; i++)
-        SDL_RenderDrawLine(renderer, tetrisWin_x, tetrisWin_y + i * blockSpace, tetrisWin_x + TETRIS_WIDTH - 1, tetrisWin_y + i * blockSpace);
+        SDL_RenderDrawLine(renderer, tetrisWin_x + 1, tetrisWin_y + i * blockSpace, tetrisWin_x + TETRIS_WIDTH - 2, tetrisWin_y + i * blockSpace);
     return 0;
 }
 

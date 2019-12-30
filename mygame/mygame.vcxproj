@@ -148,13 +148,13 @@
   <ItemGroup>
     <ClCompile Include="config.c" />
     <ClCompile Include="main.c" />
-    <ClCompile Include="menu.c" />
+    <ClCompile Include="ui.c" />
     <ClCompile Include="tetris.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="config.h" />
     <ClInclude Include="constants.h" />
-    <ClInclude Include="menu.h" />
+    <ClInclude Include="ui.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="tetris.h" />
   </ItemGroup>

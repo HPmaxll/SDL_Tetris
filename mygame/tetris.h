@@ -41,7 +41,7 @@ int randint();
 int drawMinos(SDL_Renderer*, vector*, MINOS*);
 int drawBlock(SDL_Renderer*, int, int);
 int drawRecord(SDL_Renderer*, int(*)[14]);
-int drawGrid(SDL_Renderer*);
+int drawGrid(SDL_Renderer*, SDL_Color);
 int setAxis(vector*, MINOS*, int(*)[14]);
 int unsetAxis(int(*)[14]);
 bool minosCollide(vector*, int(*)[14], const MINOS*);

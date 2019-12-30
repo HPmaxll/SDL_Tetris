@@ -18,21 +18,18 @@
     <ClCompile Include="tetris.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="menu.c">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="main.c">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="config.c">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ui.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tetris.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="menu.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="constants.h">
@@ -42,6 +39,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="config.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ui.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

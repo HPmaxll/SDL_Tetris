@@ -29,7 +29,7 @@ typedef struct {
 
 extern ITEM default_config[];
 extern OPTION config_opt[];
-extern SDL_Color Scheme[];
+extern SDL_Color SchemeSign[];
 
 int indexof(char*, char);
 void strSlice(char*, char*, int, int);

@@ -24,7 +24,7 @@ char* val_grid[] = {
 	"off"
 };
 
-SDL_Color Scheme[] = {
+SDL_Color SchemeSign[] = {
 	{255, 255, 255, 255},
 	{0, 0, 0, 255}
 };
